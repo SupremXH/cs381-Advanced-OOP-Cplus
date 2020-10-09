@@ -1,7 +1,7 @@
 #include<iostream>
 #include<fstream>
 #include<ostream>
-#include<regex>
+#include <sstream>
 using namespace std;
 class poly {
 public:
@@ -20,38 +20,13 @@ public:
 		return head;
 	}
 	void canonical(node* head,string val) {
-		regex e(R"([-+]?((\d*[xX]\^[+-]?\d+)|(\d*[xX])|(\d+)))");
-		sregex_token_iterator first(val.begin(), val.end(), e), last;
-		while (first != last) {
-			string token= *first++;
-			smatch sm;
-			if (regex_match(token, sm, regex(R"(([+-]?\d*)([xX](\^([+-]?\d+))?)?)"))) {
-				int coef;
-				if (sm[1].str().empty()) {
-					coef = 1;
-				}
-				else if (sm[1].str() == "-" || sm[1].str() == "+") {
-					coef = stoi(sm[1].str() + "1");
-				}
-				else {
-					coef = stoi(sm[1]);
-				}
-				int exp;
-				if (!sm[2].str().empty()) {
-					if (!sm[4].str().empty()) {
-						exp = stoi(sm[4].str());
-					}
-					else {
-						exp = 1;
-					}
-				}
-				else {
-					exp = 0;
-				}
-				//cout<<coef<<" "<<exp<< endl;
-				node* newNode = new node(coef, exp);
-				nodeInsert(head,newNode);
-			}
+		stringstream ss(val);
+		string coef;
+		string exp;
+		while (ss >> coef && ss >> exp) {
+			node* newNode = new node(stoi(coef), stoi(exp));
+			nodeInsert(head, newNode);
+			if (ss.eof()) break;
 		}
 	}
 	void nodeInsert(node* head,node* newnode) {
@@ -70,19 +45,20 @@ public:
 		newnode->next = cur->next;
 		cur->next = newnode;
 	}
-	void print(node* head,ofstream& outfile) {
+	
+	void print(node* head, ofstream& outfile) {
 		node* cur = head;
 		while (cur->next != NULL) {
-			if (cur == head && cur->next->coef == 1) outfile<<"";
-			else if (cur->next->coef == -1 && cur->next->exp!=0) outfile<< "-";
-			else if (cur->next->coef == 1) outfile<< "+";
-			else if (cur->next->coef > 1) outfile<< "+"<<cur->next->coef;
-			else outfile<< cur->next->coef;
-			if (cur->next->exp == 1) outfile<< "x";
-			else if (cur->next->exp > 1) outfile<< "x^" << cur->next->exp;
+			if (cur == head && cur->next->coef == 1) outfile <<"";
+			else if (cur->next->coef == -1 && cur->next->exp!=0) outfile << "-";
+			else if (cur->next->coef == 1) outfile << "+";
+			else if (cur->next->coef > 1) outfile << "+"<<cur->next->coef;
+			else outfile << cur->next->coef;
+			if (cur->next->exp == 1) outfile << "x";
+			else if (cur->next->exp > 1) outfile << "x^" << cur->next->exp;
 			cur = cur->next;
 		}
-		outfile<< endl;
+		outfile << endl;
 	}
 	void findsum(node* head,node* head1, node* head2) {
 		node* cur = head1;
@@ -122,11 +98,13 @@ public:
 		
 	}
 	void construct(ifstream& infile, ofstream& outfile) {
-		string val,val2;
-		while (infile >> val && infile >> val2) {
+			string val,val2;
+			getline(infile, val);
+			getline(infile, val2);
 			poly* p1 = new poly();
 			canonical(p1->gethead(), val);
 			outfile<< "the canonical form of p1 is:\n";
+			node* c = p1->gethead();
 			print(p1->gethead(), outfile);
 			poly* p2 = new poly();
 			canonical(p2->gethead(), val2);
@@ -144,7 +122,7 @@ public:
 			findprod(prod->gethead(), p1->gethead(), p2->gethead());
 			outfile<< "the product of p1 and p2 is:\n";
 			print(prod->gethead(), outfile);
-		}
+		
 	}
 };
 int main(int argc, char* argv[]) {
